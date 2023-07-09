@@ -3,14 +3,16 @@ pipeline {
     environment {
         scannerHome = tool 'sonar'
     }
-//    tools {
-        // maven 'jenkinsmaven'
-//        jdk 'Java17'
-//    }
+    tools {
+        maven 'jenkinsmaven'
+        // jdk 'Java17'
+    }
+
     stages {
         stage('Demount'){
             steps{
-                sh 'docker stop proyectofinal || true &&  docker rm proyectofinal || true'       
+                sh 'docker stop proyectofinal || true &&  docker rm proyectofinal || true'
+       
             }
         }
         stage('Build') {
@@ -26,17 +28,36 @@ pipeline {
 				echo 'Finalizado los tests '
             }
         }
-        stage('SonarScan'){
-            steps{
-                withSonarQubeEnv(installationName: 'sonar'){
-                    sh 'cd /var/jenkins_home/workspace/proyectoFinalDevOps'
-                    sh "mvn sonar:sonar \
-                        -Dsonar.projectKey=PtoyectoFinal \
-                        -Dsonar.host.url=http://192.168.80.1:9000 \
-                        -Dsonar.login=7519d0a385eef0af39282866a4f67747bf47c5fb"
+          stage('SonarScan'){
+              steps{
+              withSonarQubeEnv(installationName: 'sonar'){
+                 sh 'cd /var/jenkins_home/workspace/proyectoFinalDevOps'
+                 sh "mvn sonar:sonar \
+                     -Dsonar.projectKey=PtoyectoFinal \
+                     -Dsonar.host.url=http://192.168.80.1:9000 \
+                     -Dsonar.login=7519d0a385eef0af39282866a4f67747bf47c5fb"
+             }
+             }
+         }
+
+            stage("Quality Gate") {
+                steps {
+                    timeout(time: 15, unit: 'MINUTES') { 
+                        waitForQualityGate abortPipeline: true
+                        script{
+                            def qg = waitForQualityGate() 
+                            if(qg.status != 'OK'){ 
+                                error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                            }
+                        }
+                    }
                 }
             }
-        }
+
+
+
+
+
         stage('Build and Run docker'){
             steps{
                 sh 'docker build -t proyectofinal .'
