@@ -3,10 +3,10 @@ pipeline {
     environment {
         scannerHome = tool 'sonar'
     }
-    tools {
+//    tools {
         // maven 'jenkinsmaven'
-        jdk 'Java17'
-    }
+//        jdk 'Java17'
+//    }
     stages {
         stage('Demount'){
             steps{
